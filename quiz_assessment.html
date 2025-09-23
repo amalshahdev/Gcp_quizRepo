@@ -1,0 +1,416 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>MCQ Quiz — Range + Search + Results</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg: #ffffff;
+    --text: #0b0b0b;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --accent: #0ea5a4; /* teal */
+    --accent-600: #0b9b96;
+    --success: #16a34a;
+    --danger: #ef4444;
+    --soft-shadow: 0 8px 24px rgba(13, 16, 23, 0.06);
+    --radius: 12px;
+  }
+
+  html,body{height:100%; margin:0; font-family: Inter, system-ui, Roboto, Arial; background:var(--bg); color:var(--text);}
+  .wrap{max-width:980px; margin:28px auto; padding:18px;}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  .sub{color:var(--muted); font-size:13px;}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--soft-shadow); padding:16px; margin-bottom:12px; border:1px solid rgba(14,20,22,0.04);}
+  .controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .controls .group{display:flex; gap:8px; align-items:center;}
+
+  input[type="number"], input[type="text"]{
+    padding:8px 10px; border-radius:8px; border:1px solid #e6e9ee; width:120px;
+    font-size:14px;
+  }
+  input[type="text"]{width:100%;}
+  label.small{font-size:13px; color:var(--muted);}
+
+  .btn{cursor:pointer; padding:10px 14px; border-radius:10px; font-weight:600; border:0; display:inline-flex; gap:8px; align-items:center;}
+  .btn-primary{background:var(--accent); color:#fff; box-shadow: 0 6px 18px rgba(14,165,164,0.12);}
+  .btn-ghost{background:transparent; border:1px solid var(--accent); color:var(--accent);}
+  .btn-small{padding:8px 10px; font-size:13px; border-radius:8px;}
+  .btn-muted{background:#f3f4f6; color:var(--text);}
+  .muted{color:var(--muted); font-size:13px;}
+
+  .start-meta{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .range-area{display:flex; gap:8px; align-items:center;}
+
+  .search-box{margin-bottom:12px;}
+  .page-info{font-size:13px; color:var(--muted); margin-left:8px;}
+
+  /* Quiz area */
+  .quiz-head{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;}
+  .question{font-weight:600; font-size:16px; margin-bottom:12px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  .options button{display:block; width:100%; padding:12px; text-align:left; border-radius:10px; background:#fff; border:1px solid #e6e9ee; font-size:14px; cursor:pointer;}
+  .options button:hover{transform:translateY(-1px); transition:all .12s ease;}
+  .options button.correct{border-color:var(--success); background: rgba(16,185,129,0.08); box-shadow: inset 0 0 0 4px rgba(16,185,129,0.02);}
+  .options button.incorrect{border-color:var(--danger); background: rgba(239,68,68,0.04);}
+  .options button:disabled{opacity:0.95; cursor:default;}
+
+  .pager{display:flex; gap:10px; justify-content:center; margin-top:14px;}
+  .scoreboard{margin-top:16px; padding:12px; border-radius:10px; background:#f8fafb; display:flex; gap:12px; align-items:center; justify-content:center; font-weight:600; color:var(--muted);}
+
+  .result-screen{text-align:center; padding:28px; border-radius:12px; background: linear-gradient(180deg, rgba(14,165,164,0.06), rgba(240,253,250,0.6));}
+  .result-screen h2{margin:0 0 12px 0;}
+  .result-screen .score{font-size:18px; font-weight:700; margin:6px 0; color:var(--text);}
+
+  /* responsive */
+  @media (max-width:640px){
+    .controls{flex-direction:column; align-items:stretch;}
+    .range-area{flex-wrap:wrap;}
+    input[type="number"]{width:48%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>MCQ Quiz</h1>
+      <div class="sub">Practice with ranges, search inside range, and see results at the end.</div>
+    </div>
+    <div class="muted">Total questions: <strong id="totalCount">—</strong></div>
+  </header>
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="card">
+    <div class="controls start-meta">
+      <div class="group">
+        <label class="small" style="margin-right:8px">Mode</label>
+        <label><input type="radio" name="mode" value="browse" checked> Browse</label>
+        <label><input type="radio" name="mode" value="assessment"> Assessment (Random)</label>
+      </div>
+
+      <div class="group range-area">
+        <label class="small">Range</label>
+        <input id="rangeStart" type="number" min="1" placeholder="From" />
+        <span class="muted">to</span>
+        <input id="rangeEnd" type="number" min="1" placeholder="To" />
+        <button class="btn btn-ghost btn-small" id="applyRangeBtn">Apply Range</button>
+        <button class="btn btn-muted btn-small" id="clearRangeBtn">Clear</button>
+      </div>
+
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn btn-primary" id="startBtn">Start Quiz</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div id="rangeInfo" class="muted">Using full range (all questions)</div>
+      <div id="rangeError" style="color:var(--danger); display:none;"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ SECTION -->
+  <div id="quizSection" class="card hidden">
+    <div id="searchBox" class="search-box hidden">
+      <input id="searchInput" type="text" placeholder="🔍 Search inside selected questions..." oninput="applySearch()" />
+      <div class="muted" style="margin-top:8px; font-size:13px">Search filters only the currently selected range (or the chosen set of questions).</div>
+    </div>
+
+    <div id="quizArea">
+      <div id="quizHead" class="quiz-head">
+        <div><strong id="qTitle">Question</strong> <span class="page-info" id="qPage"></span></div>
+        <div id="qMeta" class="muted"></div>
+      </div>
+
+      <div id="quizContent">
+        <!-- rendered by JS -->
+      </div>
+
+      <div class="pager">
+        <button class="btn btn-ghost" id="prevBtn">Previous</button>
+        <button class="btn btn-ghost" id="nextBtn">Next</button>
+        <button class="btn btn-primary hidden" id="finishBtn">Finish</button>
+      </div>
+
+      <div id="scoreBoard" class="scoreboard hidden"></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultScreen" class="card hidden"></div>
+</div>
+
+<script>
+/* Global state */
+let allQuestions = [];
+let questions = [];           // actual set used for this quiz (after range + mode)
+let filteredQuestions = [];   // after search (subset of questions)
+let page = 0;
+let answered = {};            // keyed by question id
+let correctCount = 0, wrongCount = 0;
+let rangeSelectedQuestions = null; // null => use full
+const MAX_ASSESS = 50;
+
+/* Utility */
+function escape_html(s = '') {
+  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+function shuffle(a){
+  const arr = a.slice();
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+
+/* Load questions and assign IDs if missing */
+async function load(){
+  try{
+    const res = await fetch('questions.json');
+    const data = await res.json();
+    allQuestions = data.map((q,i)=>({ id: (q.id ?? (i+1)), ...q }));
+    document.getElementById('totalCount').innerText = allQuestions.length;
+    document.getElementById('rangeInfo').innerText = `Using full range (all questions) — ${allQuestions.length} questions`;
+  }catch(e){
+    console.error(e);
+    document.getElementById('totalCount').innerText = '0';
+    document.getElementById('rangeInfo').innerText = 'Failed to load questions.json';
+  }
+}
+
+/* Range controls */
+document.getElementById('applyRangeBtn').addEventListener('click', applyRange);
+document.getElementById('clearRangeBtn').addEventListener('click', ()=>{
+  document.getElementById('rangeStart').value = '';
+  document.getElementById('rangeEnd').value = '';
+  rangeSelectedQuestions = null;
+  document.getElementById('rangeInfo').innerText = `Using full range (all questions) — ${allQuestions.length} questions`;
+  hideRangeError();
+});
+
+function showRangeError(msg){
+  const el = document.getElementById('rangeError');
+  el.style.display = 'block';
+  el.innerText = msg;
+}
+function hideRangeError(){ document.getElementById('rangeError').style.display = 'none'; document.getElementById('rangeError').innerText = ''; }
+
+function applyRange(){
+  hideRangeError();
+  const total = allQuestions.length;
+  let start = parseInt(document.getElementById('rangeStart').value);
+  let end = parseInt(document.getElementById('rangeEnd').value);
+  if(!start && !end){
+    rangeSelectedQuestions = null;
+    document.getElementById('rangeInfo').innerText = `Using full range (all questions) — ${total} questions`;
+    return;
+  }
+  if(!start || isNaN(start) || start < 1) start = 1;
+  if(!end || isNaN(end) || end > total) end = total;
+  if(start > end){
+    showRangeError('Start must be less than or equal to End.');
+    return;
+  }
+  // slice is 0-indexed, inclusive on both sides
+  rangeSelectedQuestions = allQuestions.slice(start - 1, end);
+  document.getElementById('rangeInfo').innerText = `Selected range: ${start} — ${end} → ${rangeSelectedQuestions.length} questions`;
+}
+
+/* Start quiz */
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  startQuiz(mode);
+});
+
+function startQuiz(mode){
+  hideRangeError();
+  // determine selected set
+  const base = rangeSelectedQuestions || allQuestions;
+  if(!base || base.length === 0){
+    showRangeError('No questions available in the selected range.');
+    return;
+  }
+  if(mode === 'assessment'){
+    const n = Math.min(MAX_ASSESS, base.length);
+    questions = shuffle(base).slice(0, n);
+  } else { // browse
+    questions = base.slice(); // keep order
+  }
+
+  // reset state
+  filteredQuestions = questions.slice();
+  page = 0; answered = {}; correctCount = 0; wrongCount = 0;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('quizSection').classList.remove('hidden');
+
+  // show search only in browse mode (user wanted search mainly for browse)
+  document.getElementById('searchBox').classList.toggle('hidden', mode !== 'browse');
+
+  render();
+  updateScore();
+}
+
+/* Rendering the quiz content using DOM (safer than string building) */
+function render(){
+  const area = document.getElementById('quizContent');
+  area.innerHTML = '';
+
+  if(!filteredQuestions || filteredQuestions.length === 0){
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.innerText = 'No questions found for your search/selection.';
+    area.appendChild(p);
+    document.getElementById('prevBtn').disabled = true;
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('finishBtn').classList.add('hidden');
+    document.getElementById('qPage').innerText = '';
+    document.getElementById('qMeta').innerText = '';
+    return;
+  }
+
+  const q = filteredQuestions[page];
+  document.getElementById('qTitle').innerText = `Q${page+1}.`;
+  document.getElementById('qPage').innerText = `${page+1}/${filteredQuestions.length}`;
+  document.getElementById('qMeta').innerText = `Original ID: ${q.id}`;
+
+  // Question text
+  const qtext = document.createElement('div');
+  qtext.className = 'question';
+  qtext.innerHTML = escape_html(q.question || '');
+  area.appendChild(qtext);
+
+  // Options
+  const opts = document.createElement('div');
+  opts.className = 'options';
+  const keys = Object.keys(q.options || {});
+  for(const key of keys){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerText = `${key}. ${q.options[key]}`;
+    // determine if already answered
+    const answeredKey = answered[q.id];
+    if(answeredKey){
+      btn.disabled = true;
+      if(key === q.answer) btn.classList.add('correct');
+      if(key === answeredKey && answeredKey !== q.answer) btn.classList.add('incorrect');
+    } else {
+      btn.addEventListener('click', ()=>{
+        onSelect(btn, key, q.answer, q.id);
+      });
+    }
+    opts.appendChild(btn);
+  }
+  area.appendChild(opts);
+
+  // pager enable/disable
+  document.getElementById('prevBtn').disabled = page === 0;
+  document.getElementById('nextBtn').disabled = page >= filteredQuestions.length - 1;
+  document.getElementById('finishBtn').classList.toggle('hidden', page !== filteredQuestions.length - 1);
+
+  // small helpful note
+  const help = document.createElement('div');
+  help.className = 'muted';
+  help.style.marginTop = '10px';
+  help.innerText = 'Select an option to lock your answer. You can navigate using Previous/Next.';
+  area.appendChild(help);
+}
+
+/* Selection handling */
+function onSelect(btn, key, correct, qid){
+  if(answered[qid]) return;
+  answered[qid] = key;
+
+  if(key === correct){
+    correctCount++;
+    btn.classList.add('correct');
+  } else {
+    wrongCount++;
+    btn.classList.add('incorrect');
+    // highlight correct button
+    const parent = btn.parentElement;
+    for(const b of parent.querySelectorAll('button')){
+      if(b.innerText.startsWith(correct + '.')) b.classList.add('correct');
+    }
+  }
+  // disable all option buttons for this question
+  for(const b of btn.parentElement.querySelectorAll('button')) b.disabled = true;
+
+  updateScore();
+}
+
+/* Pagination */
+document.getElementById('prevBtn').addEventListener('click', ()=>{ if(page>0){ page--; render(); } });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ if(page < filteredQuestions.length-1){ page++; render(); } });
+document.getElementById('finishBtn').addEventListener('click', showResult);
+
+/* Score UI */
+function updateScore(){
+  const el = document.getElementById('scoreBoard');
+  el.classList.remove('hidden');
+  el.innerText = `✅ Correct: ${correctCount}   |   ❌ Wrong: ${wrongCount}   |   Points: ${correctCount}`;
+}
+
+/* Search (filters within 'questions') */
+function applySearch(){
+  const term = document.getElementById('searchInput').value.trim().toLowerCase();
+  if(!term){
+    filteredQuestions = questions.slice();
+  } else {
+    filteredQuestions = questions.filter(q => (q.question || '').toLowerCase().includes(term) || Object.values(q.options || {}).some(opt => String(opt).toLowerCase().includes(term)));
+  }
+  page = 0;
+  render();
+}
+
+/* Show final result */
+function showResult(){
+  document.getElementById('quizSection').classList.add('hidden');
+  const res = document.getElementById('resultScreen');
+  res.classList.remove('hidden');
+  const total = filteredQuestions.length || questions.length || 0;
+  const percentage = total ? Math.round((correctCount / total) * 100) : 0;
+  res.innerHTML = `
+    <div class="result-screen">
+      <h2>🎉 Quiz Completed</h2>
+      <div class="score">✅ Correct: ${correctCount}</div>
+      <div class="score">❌ Wrong: ${wrongCount}</div>
+      <div class="score">🏆 Points: ${correctCount}</div>
+      <div class="score">📊 Score: ${percentage}% (${correctCount}/${total})</div>
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:center;">
+        <button class="btn btn-primary" onclick="restart()">Restart</button>
+        <button class="btn btn-ghost" onclick="reviewAnswers()">Review Answers</button>
+      </div>
+    </div>
+  `;
+}
+
+/* Restart to start screen */
+function restart(){
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+  // keep range inputs as they were so user can tweak and re-apply
+}
+
+/* Optional quick review: show all answered questions with selected vs correct (simple list) */
+function reviewAnswers(){
+  // create a quick review screen replacing result
+  const el = document.getElementById('resultScreen');
+  el.classList.remove('hidden');
+  const items = (questions || []).map(q => {
+    const picked = answered[q.id] ?? '—';
+    const correct = q.answer;
+    return `<div style="padding:10px;border-radius:8px;margin:8px 0;background:#fff;border:1px solid #eef2f6;">
+      <div style="font-weight:600">${escape_html(q.question || '')}</div>
+      <div style="margin-top:6px;color:var(--muted)">Your answer: <strong style="${picked===correct? 'color:var(--success)':'color:var(--danger)'}">${picked}</strong> | Correct: <strong>${correct}</strong></div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="card"><h3>Review Answers</h3>${items}<div style="margin-top:12px;"><button class="btn btn-primary" onclick="restart()">Back to Start</button></div></div>`;
+}
+
+/* Kick off */
+load();
+</script>
+</body>
+</html>
