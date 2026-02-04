@@ -21,7 +21,7 @@ function shuffle(a) {
 /* Load questions and assign IDs if missing */
 async function load() {
   try {
-    const res = await fetch('questions/questions.json');
+    const res = await fetch('/api/questions');
     const data = await res.json();
     allQuestions = data.map((q, i) => ({ id: (q.id ?? (i + 1)), ...q }));
     document.getElementById('totalCount').innerText = allQuestions.length;
