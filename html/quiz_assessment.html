@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>MCQ Quiz — Range + Search + Results</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="D:\Work Folder\Projects\QuizAppHtml\css\style.css">
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>MCQ Quiz</h1>
+        <div class="sub">Practice with ranges, search inside range, and see results at the end.</div>
+      </div>
+      <div class="muted">Total questions: <strong id="totalCount">—</strong></div>
+    </header>
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="card">
+      <div class="controls start-meta">
+        <div class="group">
+          <label class="small" style="margin-right:8px">Mode</label>
+          <label><input type="radio" name="mode" value="browse" checked> Browse</label>
+          <label><input type="radio" name="mode" value="assessment"> Assessment (Random)</label>
+        </div>
+
+        <div class="group range-area">
+          <label class="small">Range</label>
+          <input id="rangeStart" type="number" min="1" placeholder="From" />
+          <span class="muted">to</span>
+          <input id="rangeEnd" type="number" min="1" placeholder="To" />
+          <button class="btn btn-ghost btn-small" id="applyRangeBtn">Apply Range</button>
+          <button class="btn btn-muted btn-small" id="clearRangeBtn">Clear</button>
+        </div>
+
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <button class="btn btn-primary" id="startBtn">Start Quiz</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div id="rangeInfo" class="muted">Using full range (all questions)</div>
+        <div id="rangeError" style="color:var(--danger); display:none;"></div>
+      </div>
+    </div>
+
+    <!-- QUIZ SECTION -->
+    <div id="quizSection" class="card hidden">
+      <div id="searchBox" class="search-box hidden">
+        <input id="searchInput" type="text" placeholder="🔍 Search inside selected questions..."
+          oninput="applySearch()" />
+        <div class="muted" style="margin-top:8px; font-size:13px">Search filters only the currently selected range (or
+          the chosen set of questions).</div>
+      </div>
+
+      <div id="quizArea">
+        <div id="quizHead" class="quiz-head">
+          <div><strong id="qTitle">Question</strong> <span class="page-info" id="qPage"></span></div>
+          <div id="qMeta" class="muted"></div>
+        </div>
+
+        <div id="quizContent">
+          <!-- rendered by JS -->
+        </div>
+
+        <div class="pager">
+          <button class="btn btn-ghost" id="prevBtn">Previous</button>
+          <button class="btn btn-ghost" id="nextBtn">Next</button>
+          <button class="btn btn-primary hidden" id="finishBtn">Finish</button>
+        </div>
+
+        <div id="scoreBoard" class="scoreboard hidden"></div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="resultScreen" class="card hidden"></div>
+  </div>
+
+  <script src="js\script.js" defer></script>
+</body>
+
+</html>
