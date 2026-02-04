@@ -37,11 +37,30 @@ app.get('/api/questions', async (req, res) => {
     if (key !== API_KEY) return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const file = path.join(__dirname, 'questions', 'questions.json');
-    const data = await fs.readFile(file, 'utf8');
+    const fileParam = req.query.file || 'questions.json';
+    // sanitize basename to avoid path traversal
+    const base = path.basename(fileParam);
+    const questionsDir = path.join(__dirname, 'questions');
+    const file = path.join(questionsDir, base);
+    const resolved = path.resolve(file);
+    if (!resolved.startsWith(path.resolve(questionsDir))) return res.status(400).json({ error: 'Invalid file' });
+    const data = await fs.readFile(resolved, 'utf8');
     res.type('application/json').send(data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to read questions' });
+  }
+});
+
+// List available exam JSON files in the questions directory
+app.get('/api/exams', async (req, res) => {
+  try {
+    const questionsDir = path.join(__dirname, 'questions');
+    const files = await fs.readdir(questionsDir);
+    const jsonFiles = files.filter(f => f.toLowerCase().endsWith('.json'));
+    const list = jsonFiles.map(f => ({ file: f, name: f.replace(/\.json$/i, '') }));
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list exams' });
   }
 });
 

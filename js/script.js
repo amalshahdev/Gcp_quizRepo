@@ -21,15 +21,44 @@ function shuffle(a) {
 /* Load questions and assign IDs if missing */
 async function load() {
   try {
-    const res = await fetch('/api/questions');
+    const examFile = localStorage.getItem('selectedExam') || (document.getElementById('examSelect') && document.getElementById('examSelect').value) || 'questions.json';
+    const res = await fetch('/api/questions?file=' + encodeURIComponent(examFile));
+    if (!res.ok) throw new Error('Failed to fetch questions: ' + res.status);
     const data = await res.json();
-    allQuestions = data.map((q, i) => ({ id: (q.id ?? (i + 1)), ...q }));
+    allQuestions = (Array.isArray(data) ? data : []).map((q, i) => ({ id: (q.id ?? (i + 1)), ...q }));
     document.getElementById('totalCount').innerText = allQuestions.length;
     document.getElementById('rangeInfo').innerText = `Using full range (all questions) — ${allQuestions.length} questions`;
   } catch (e) {
     console.error(e);
     document.getElementById('totalCount').innerText = '0';
-    document.getElementById('rangeInfo').innerText = 'Failed to load questions.json';
+    document.getElementById('rangeInfo').innerText = 'Failed to load questions';
+  }
+}
+
+/* Load available exams into selector */
+async function loadExams() {
+  const sel = document.getElementById('examSelect');
+  if (!sel) return;
+  try {
+    const res = await fetch('/api/exams');
+    if (!res.ok) throw new Error('Failed to load exams');
+    const list = await res.json();
+    sel.innerHTML = '';
+    for (const e of list) {
+      const o = document.createElement('option');
+      o.value = e.file;
+      o.innerText = e.name || e.file;
+      sel.appendChild(o);
+    }
+    const stored = localStorage.getItem('selectedExam');
+    if (stored && Array.from(sel.options).some(o => o.value === stored)) sel.value = stored;
+    sel.addEventListener('change', () => {
+      localStorage.setItem('selectedExam', sel.value);
+      load();
+    });
+  } catch (err) {
+    console.warn('Could not load exams list, defaulting to questions.json', err);
+    sel.innerHTML = '<option value="questions.json">Default Questions</option>';
   }
 }
 
@@ -264,4 +293,7 @@ function reviewAnswers() {
 }
 
 /* Kick off */
-load();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadExams();
+  await load();
+});

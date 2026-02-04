@@ -11,9 +11,10 @@
   --radius: 12px;
 }
 
+.wrap{box-sizing:border-box}
 html,body{height:100%; margin:0; font-family: Inter, system-ui, Roboto, Arial; background:var(--bg); color:var(--text);}
-.wrap{max-width:980px; margin:28px auto; padding:18px;}
-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;}
+.wrap{max-width:980px; width:100%; margin:20px auto; padding:18px;}
+header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap}
 h1{font-size:20px; margin:0;}
 .sub{color:var(--muted); font-size:13px;}
 
@@ -63,4 +64,25 @@ label.small{font-size:13px; color:var(--muted);}
   .controls{flex-direction:column; align-items:stretch;}
   .range-area{flex-wrap:wrap;}
   input[type="number"]{width:48%;}
+}
+
+/* additional responsive tweaks */
+@media (max-width:900px){
+  .wrap{padding:14px;}
+  h1{font-size:18px}
+  .sub{font-size:12px}
+  .controls .group{width:100%}
+  .range-area input[type="number"]{width:40%}
+  .start-meta{align-items:flex-start}
+}
+
+@media (max-width:480px){
+  .wrap{margin:12px; padding:12px}
+  .quiz-head{flex-direction:column; align-items:flex-start; gap:8px}
+  .options button{padding:10px; font-size:13px}
+  input[type="number"]{width:48%;}
+  .controls{gap:8px}
+  .pager{flex-direction:column}
+  .pager button{width:100%}
+  #examSelect{width:100%}
 }
