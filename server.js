@@ -29,7 +29,7 @@ app.use('/api/', limiter);
 
 // Serve static site from project root (serves html/, css/, js/, questions/)
 const publicDir = path.join(__dirname);
-app.use(express.static(publicDir, { index: 'html/quiz_assessment.html' }));
+app.use(express.static(publicDir, { index: 'html/index.html' }));
 
 app.get('/api/questions', async (req, res) => {
   if (API_KEY) {
